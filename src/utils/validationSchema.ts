@@ -1,8 +1,9 @@
-import * as yup from 'yup'
+import * as Yup from 'yup';
 
-
-export const CreateUserSchema = yup.object().shape({
-    name: yup.string().trim().required("Name is missing").min(3, "Name is too short").max(20, "Name is too strong"),
-    email: yup.string().required("Email is missing").email("Invalid email").required("Email is missing"),
-    password: yup.string().trim().required("Password is missing").min(8, "Password is too short").matches(/^(?=.[a-z])(?=.[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, "Password is too simple")
+export const CreateUserSchema = Yup.object().shape({
+    name: Yup.string().trim().required('Name is required').min(3, 'Name must be at least 3 characters').max(20, 'Name must be at most 20 characters'),
+    email: Yup.string().email('Invalid email').required('Email is required'),
+    password: Yup.string().trim().required('Password is required').min(3, 'Password must be at least 8 characters')
 })
+
+//.matches(/^(?=.[a-z])(?=.[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, 'Password must contain at least one uppercase letter, one lowercase letter and one number')

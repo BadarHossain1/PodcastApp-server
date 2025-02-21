@@ -5,7 +5,7 @@ import { RequestHandler } from "express";
 export const validate = (schema: any): RequestHandler => {
     return async (req, res, next) => {
         if(!req.body) {
-            res.status(400).json({ error: "Empty body is not accepted" });
+            res.status(404).json({ error: "Empty body is not accepted" });
             return;
         }
 
@@ -24,7 +24,7 @@ export const validate = (schema: any): RequestHandler => {
         }
         catch (error) {
             if(error instanceof yup.ValidationError) {
-                res.status(400).json({ error: error.errors });
+                res.status(422).json({ error: error.errors });
                 return;
             }
         }
