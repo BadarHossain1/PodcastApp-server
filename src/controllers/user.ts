@@ -43,6 +43,9 @@ export const create: RequestHandler = async (req: CreateUser, res) => {
         html: `<h1>your verification toke is ${token}</h1>`
     });
 
+
+
+    
     res.status(201).json({ user });
 
 
