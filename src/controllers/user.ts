@@ -1,7 +1,8 @@
 import { RequestHandler } from "express";
 
-import nodemailer from 'nodemailer';
 
+import nodemailer from 'nodemailer';
+import path from 'path';
 
 import { CreateUser } from "#/@types/user";
 import User from "#/models/user";
@@ -9,6 +10,7 @@ import { MAILTRAP_PASS, MAILTRAP_USER } from "#/utils/variables";
 import { generateToken } from "#/utils/helper";
 
 import emailVerification from "#/models/emailVerificationToken";
+import { generateTemplate } from "#/mail/template";
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
 
@@ -41,11 +43,33 @@ export const create: RequestHandler = async (req: CreateUser, res) => {
     })
 
     
+    const welcomeMessage = `Hi ${user.name}, welcome to Podify 🎉🎉🎉` ;
 
     transport.sendMail({
         to: user.email,
         from: "auth@myYupp.com",
-        html: `<h1>your verification toke is ${token}</h1>`
+        html: generateTemplate({
+            title: "Email Verification",
+            message: welcomeMessage,
+            logo: "cid:logo",
+            banner: "cid:welcome",
+            link: "#",
+            btnTitle: token,
+        }),
+        attachments: [
+            {
+                filename: "logo.png",
+                path: path.join(__dirname, "../mail/logo.png"),
+                cid: "logo"
+            },
+            {
+                filename: "welcome.png",
+                path: path.join(__dirname, "../mail/welcome.png"),
+                cid: "welcome"
+            },
+
+        ]
+
     });
 
 
