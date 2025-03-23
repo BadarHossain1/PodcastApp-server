@@ -1,4 +1,4 @@
-export const generateToken = (length: number) => {
+export const generateToken = (length: number = 6) => {
 
     //declare a variable for holding the token
 

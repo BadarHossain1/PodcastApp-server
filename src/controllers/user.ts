@@ -1,83 +1,63 @@
 import { RequestHandler } from "express";
 
 
-import nodemailer from 'nodemailer';
-import path from 'path';
 
-import { CreateUser } from "#/@types/user";
+import { CreateUser, VerifyEmailRequest } from "#/@types/user";
 import User from "#/models/user";
-import { MAILTRAP_PASS, MAILTRAP_USER } from "#/utils/variables";
 import { generateToken } from "#/utils/helper";
+import { sendVerificationMail } from "#/utils/mail";
+import EmailVerificationToken from "#/models/emailVerificationToken";
 
-import emailVerification from "#/models/emailVerificationToken";
-import { generateTemplate } from "#/mail/template";
+
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
 
     const { name, email, password } = req.body;
 
 
-    
+
+
 
     const user = await User.create({ name, email, password });
     //send verification email
-    const transport = nodemailer.createTransport({
-        host: "sandbox.smtp.mailtrap.io",
-        port: 2525,
-        auth: {
-            user: MAILTRAP_USER,
-            pass: MAILTRAP_PASS
-        }
-    });
 
-
-    
+    const token = generateToken();
+    sendVerificationMail(token, { name, email, userId: user._id.toString() });
 
 
 
-
-    const token = generateToken(6);
-    await emailVerification.create({
-        owner: user._id,
-        token: token
-    })
-
-    
-    const welcomeMessage = `Hi ${user.name}, welcome to Podify 🎉🎉🎉` ;
-
-    transport.sendMail({
-        to: user.email,
-        from: "auth@myYupp.com",
-        html: generateTemplate({
-            title: "Email Verification",
-            message: welcomeMessage,
-            logo: "cid:logo",
-            banner: "cid:welcome",
-            link: "#",
-            btnTitle: token,
-        }),
-        attachments: [
-            {
-                filename: "logo.png",
-                path: path.join(__dirname, "../mail/logo.png"),
-                cid: "logo"
-            },
-            {
-                filename: "welcome.png",
-                path: path.join(__dirname, "../mail/welcome.png"),
-                cid: "welcome"
-            },
-
-        ]
-
-    });
-
-
-
-    
-    res.status(201).json({ user });
+    res.status(201).json({ user: { id: user._id, name, email } });
 
 
 
 
 }
+
+
+
+export const verifyEmail: RequestHandler = async (req: VerifyEmailRequest, res) => {
+
+    const { token, userId } = req.body;
+
+    const verificationToken = await EmailVerificationToken.findOne({ owner: userId });
+
+    if (!verificationToken) {
+        res.status(403).json({ error: "Invalid token" });
+        return;
+    };
+
+    const matched = await verificationToken.compareToken(token);
+
+    if (!matched) {
+        res.status(403).json({ error: "Invalid token" });
+        return;
+    };
+
+    await User.findByIdAndUpdate(userId, {
+        verified: true
+    });
+
+    await EmailVerificationToken.findByIdAndDelete(verificationToken._id);
+    res.status(200).json({ message: "Email verified"});
+
+};

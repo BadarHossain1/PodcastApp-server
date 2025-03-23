@@ -8,5 +8,12 @@ export interface CreateUser extends Request {
     };
 }
 
+export interface VerifyEmailRequest extends Request {
+    body: {
+        userId: string;
+        token: string;
+    };
+}
+
 
 
