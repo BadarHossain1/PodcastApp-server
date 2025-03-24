@@ -5,8 +5,13 @@ import { RequestHandler } from "express";
 import { CreateUser, VerifyEmailRequest } from "#/@types/user";
 import User from "#/models/user";
 import { generateToken } from "#/utils/helper";
-import { sendVerificationMail } from "#/utils/mail";
+import { sendForgetPasswordLink, sendPassResetSuccessEmail, sendVerificationMail } from "#/utils/mail";
 import EmailVerificationToken from "#/models/emailVerificationToken";
+import { isValidObjectId } from "mongoose";
+import passwordResetToken from "#/models/passwordResetToken";
+import crypto from "crypto";
+import { PASSWORD_RESET_LINK } from "#/utils/variables";
+
 
 
 
@@ -60,4 +65,92 @@ export const verifyEmail: RequestHandler = async (req: VerifyEmailRequest, res) 
     await EmailVerificationToken.findByIdAndDelete(verificationToken._id);
     res.status(200).json({ message: "Email verified"});
 
+};
+
+export const sendReVerificationToken: RequestHandler = async (req, res) => {
+
+    const { userId } = req.body;
+
+    if(!isValidObjectId(userId) ) {
+        res.status(403).json({ error: "Invalid request" });
+        return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) { 
+        res.status(403).json({ error: "Invalid user" });
+        return;}
+
+    await EmailVerificationToken.findOneAndDelete({ owner: userId });
+
+    const token = generateToken();
+
+    EmailVerificationToken.create({ owner: userId, token });
+
+    await User.findById(userId)
+
+    sendVerificationMail(token, { name: user?.name, email:user?.email, userId: user?._id.toString() });
+
+    res.json({ message: "Verification email sent. Please check your mail" });
+};
+
+export const generateForgetPasswordLink: RequestHandler = async (req, res) => {
+
+    const { email } = req.body;
+
+    const user  = await User.findOne({ email });
+
+    if(!user){
+        res.status(404).json({ error: "Account not found" });
+        return;
+    }
+
+    //generate the link
+    // https://example.com/reset-password?token=hfksdsddeef&userId=wdidfdmf
+    //send the link to the email
+
+    await passwordResetToken.findOneAndDelete({ owner: user._id });
+    const token = crypto.randomBytes(36).toString("hex");
+
+
+    await passwordResetToken.create({ owner: user._id, token });
+
+    const resetLink = `${PASSWORD_RESET_LINK}?token=${token}&userId=${user._id}`;
+
+
+    sendForgetPasswordLink({ email, link: resetLink });
+
+    res.json({ message: "Password reset link sent. Please check your mail" });
+
+
+
+
+
+};
+
+export const grantValid: RequestHandler = async (req, res) => {
+    res.json({valid: true});
+};
+export const updatePassword: RequestHandler = async (req, res) => {
+    const {password, userId} = req.body;
+
+    const user = await User.findById(userId)
+    if(!user){
+        res.status(403).json({error: "Unauthorized access found"})
+        return;
+    }
+    const matched = await user.comparePassword(password)
+    if(matched){
+        res.status(422).json({error: "The new password must be different"})
+    }
+
+    user.password = password;
+    await user.save()
+
+    await passwordResetToken.findOneAndDelete({owner: user._id})
+
+    //send success email
+
+    sendPassResetSuccessEmail(user.name, user.email);
+    res.json({message: "email sent"});
 };
