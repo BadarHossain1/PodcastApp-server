@@ -91,7 +91,7 @@ export const sendForgetPasswordLink = async (options: Options) => {
             message,
             logo: "cid:logo",
             banner: "cid:forget_password",
-            link: "#", // You can set the verification link here if needed
+            link: link, // You can set the verification link here if needed
             btnTitle: "Reset Password"
         }),
         attachments: [
