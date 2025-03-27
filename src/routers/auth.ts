@@ -40,4 +40,41 @@ router.get('/private', mustAuth, (req,res)=> {
         message: "You are in private route"
     })
 })
+
+
+import formidable from 'formidable';
+import path from 'path';
+import fs from 'fs';
+
+router.post('/update-profile', async (req, res) => {
+
+    if (!req.headers['content-type']?.startsWith('multipart/form-data')) {
+        res.status(422).json({ error: 'Invalid content type. Must be multipart/form-data' });
+        return;
+    }
+
+    const dir = path.join(__dirname, "../public/profiles");
+
+    try {
+
+        await fs.readdirSync(dir)
+    } catch (error) {
+        await fs.mkdirSync(dir);
+    }
+
+    const form = formidable({
+        uploadDir: dir,
+        filename(name, ext, part, form) {
+
+            return Date.now() + "_" + part.originalFilename;
+
+        },
+    });
+    form.parse(req, (err, fields, files) => {
+        // console.log(fields);
+        // console.log(files);
+        res.json({ uploaded: true});
+});
+
+})
 export default router;
