@@ -1,5 +1,5 @@
 
-import { create, generateForgetPasswordLink, grantValid, sendReVerificationToken, signIn, updatePassword, verifyEmail } from "#/controllers/user";
+import { create, generateForgetPasswordLink, grantValid, logOut, sendProfile, sendReVerificationToken, signIn, updatePassword, updateProfile, verifyEmail } from "#/controllers/auth";
 import { validate } from "#/middleware/validator";
 import { CreateUserSchema, TokenAndIDValidation, UpdatePasswordSchema, SignInValidationSchema } from "#/utils/validationSchema";
 import { Router, Request } from "express";
@@ -7,6 +7,12 @@ import { isValidPassResetToken, mustAuth } from "#/middleware/auth";
 import { JwtPayload, verify } from "jsonwebtoken";
 import { JWT_SECRET } from "#/utils/variables";
 import User from "#/models/user";
+import formidable from 'formidable';
+import path from 'path';
+import fs from 'fs';
+import fileParser from "#/middleware/fileParser";
+
+
 
 
 const router = Router();
@@ -22,11 +28,7 @@ router.post("/forget-password", generateForgetPasswordLink);
 router.post("/verify-pass-reset-token", validate(TokenAndIDValidation), isValidPassResetToken, grantValid);
 router.post("/update-password", validate(UpdatePasswordSchema), isValidPassResetToken, updatePassword);
 router.post("/sign-in", validate(SignInValidationSchema), signIn);
-router.get("/is-auth", mustAuth, (req, res) => {
-    res.json({
-        profile: req.user,
-    })
-}
+router.get("/is-auth", mustAuth, sendProfile
 )
 
 router.get('/public', (req,res)=> {
@@ -42,39 +44,12 @@ router.get('/private', mustAuth, (req,res)=> {
 })
 
 
-import formidable from 'formidable';
-import path from 'path';
-import fs from 'fs';
 
-router.post('/update-profile', async (req, res) => {
 
-    if (!req.headers['content-type']?.startsWith('multipart/form-data')) {
-        res.status(422).json({ error: 'Invalid content type. Must be multipart/form-data' });
-        return;
-    }
+router.post('/update-profile', mustAuth,  fileParser,  updateProfile
 
-    const dir = path.join(__dirname, "../public/profiles");
 
-    try {
+)
 
-        await fs.readdirSync(dir)
-    } catch (error) {
-        await fs.mkdirSync(dir);
-    }
-
-    const form = formidable({
-        uploadDir: dir,
-        filename(name, ext, part, form) {
-
-            return Date.now() + "_" + part.originalFilename;
-
-        },
-    });
-    form.parse(req, (err, fields, files) => {
-        // console.log(fields);
-        // console.log(files);
-        res.json({ uploaded: true});
-});
-
-})
+router.post('/log-out', mustAuth, logOut);
 export default router;
