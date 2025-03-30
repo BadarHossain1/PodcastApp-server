@@ -14,8 +14,8 @@ import crypto from "crypto";
 import { JWT_SECRET, PASSWORD_RESET_LINK } from "#/utils/variables";
 import cloudinary from "#/cloud";
 import formidable, { File } from "formidable";
-
 interface RequestWithFiles extends Request {
+
     files?: { [key: string]: File }
 }
 

@@ -2,7 +2,7 @@ import { RequestHandler, Request } from "express";
 import formidable, { File } from "formidable";
 
 
-interface RequestWithFiles extends Request {
+export interface RequestWithFiles extends Request {
     files?: { [key: string]: File }
 }
 
