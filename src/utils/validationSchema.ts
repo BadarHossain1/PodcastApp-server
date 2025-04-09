@@ -98,5 +98,31 @@ export const AudioValidationSchema = Yup.object().shape({
 });
 
 
+// while creating playlist there can be request
+// with new playlist name and the audio that user wants to store inside that playlist
+// or user just want to create an empty playlist
+
+export const NewPlaylistValidateSchema = Yup.object().shape({
+
+    title: Yup.string()
+       
+        .required('Title is required'),
+
+    resId: Yup.string().transform(function (value) {
+        if(this.isType(value) && isValidObjectId(value)) {
+            return value;
+        }
+        else{
+            return "";
+        }
+
+    }),
+
+    visibility: Yup.string().oneOf(["public", "private"], "Invalid visibility!").required("Visibility is missing"),
+        
+        
+
+    
+});
 
 
