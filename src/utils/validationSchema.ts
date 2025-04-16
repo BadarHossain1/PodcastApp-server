@@ -126,3 +126,31 @@ export const NewPlaylistValidateSchema = Yup.object().shape({
 });
 
 
+export const OldNewPlaylistValidateSchema = Yup.object().shape({
+
+    title: Yup.string()
+       
+        .required('Title is missing'),
+
+    item: Yup.string().transform(function (value) {
+        return this.isType(value) && isValidObjectId(value) ? value : ""
+        ;
+    }
+    ),
+
+    id: Yup.string().transform(function (value) {
+        return this.isType(value) && isValidObjectId(value) ? value : ""
+        ;
+    }
+    ),
+
+
+
+    visibility: Yup.string().oneOf(["public", "private"], "Invalid visibility!  Must be public or private")
+        
+        
+
+    
+});
+
+
