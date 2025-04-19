@@ -154,3 +154,22 @@ export const OldNewPlaylistValidateSchema = Yup.object().shape({
 });
 
 
+export const UpdateHistorySchema = Yup.object().shape({
+
+    audio: Yup.string().transform(function (value) {
+        return this.isType(value) && isValidObjectId(value) ? value : ""
+        ;
+    }
+    ).required("Invalid Audio Id"),
+
+    progress: Yup.number().required("History progress is missing"),
+    date: Yup.string().transform(function (value) {
+        const date = new Date(value);
+        if(date instanceof Date){
+            return value;
+        }
+        return ""
+        
+    }).required("Invalid date mate!"),
+    
+});
